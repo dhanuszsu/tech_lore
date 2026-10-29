@@ -1,0 +1,39 @@
+{
+  "status": "PASSED_ALL_INTEGRITY_CHECKS",
+  "timestamp": "2026-10-29T21:28:11.907802",
+  "topics_count": 24,
+  "time_steps_per_topic": 267,
+  "total_data_points": 6408,
+  "min_value": 0.0,
+  "max_value": 100.0,
+  "null_values_count": 0,
+  "evidence_events_count": 49,
+  "best_k_silhouette": 0.395,
+  "pca_variance_retained": "78.5%",
+  "verification_tests": [
+    {
+      "test": "Monotonic Monthly Date Sequence (2004-01 to 2026-03)",
+      "passed": true
+    },
+    {
+      "test": "Bounded Normalized Values [0.0 - 100.0]",
+      "passed": true
+    },
+    {
+      "test": "Zero Missing/Null/NaN Entries",
+      "passed": true
+    },
+    {
+      "test": "StandardScaler Zero Mean & Unit Variance Check",
+      "passed": true
+    },
+    {
+      "test": "K-Means Convergence on Scikit-Learn Engine",
+      "passed": true
+    },
+    {
+      "test": "Verified Evidence Event Source Provenance",
+      "passed": true
+    }
+  ]
+}

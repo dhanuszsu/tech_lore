@@ -1,0 +1,1697 @@
+/* ==========================================================================
+   TECH LORE — EDITORIAL RESEARCH DESIGN SYSTEM
+   Editorial Research Publication + Experimental Data Lab
+   ========================================================================== */
+
+:root {
+  /* Color Palette: Deep Slate Charcoal Base */
+  --bg-primary: #0b0d12;
+  --bg-secondary: #11141c;
+  --bg-tertiary: #161a24;
+  --bg-card: #12151f;
+  --bg-card-hover: #181d2a;
+  --bg-subtle: rgba(255, 255, 255, 0.025);
+  --bg-overlay: rgba(10, 12, 17, 0.88);
+
+  /* Hairline Borders (Restrained, subtle) */
+  --border-hairline: rgba(255, 255, 255, 0.06);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-focus: rgba(56, 189, 248, 0.5);
+
+  /* Typography Hierarchy */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-dim: #475569;
+
+  /* Restrained Accent Palette */
+  --accent-cyan: #38bdf8;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #a855f7;
+
+  /* Category Evidence Indicators (Subtle, desaturated base + crisp accents) */
+  --cat-yellow: #eab308;
+  --cat-pink: #ec4899;
+  --cat-blue: #3b82f6;
+  --cat-red: #ef4444;
+  --cat-green: #10b981;
+  --cat-cyan: #06b6d4;
+  --cat-purple: #a855f7;
+
+  /* Typographic Roles */
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-eyebrow: 'Newsreader', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Shadows (Quiet & Deep) */
+  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* Reset & Base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+  transition: all 0.16s ease;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* ==========================================================================
+   LAYOUT STRUCTURE & BACKGROUND
+   ========================================================================== */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  background: radial-gradient(ellipse at 50% 0%, #151924 0%, #0b0d12 65%);
+}
+
+/* Background Orbital Rings (Quiet, technical guide lines) */
+.orbital-canvas-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 560px;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.18;
+}
+
+.orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  top: -240px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.orbital-ring.ring-1 { width: 700px; height: 700px; }
+.orbital-ring.ring-2 { width: 1040px; height: 1040px; border-style: solid; border-color: rgba(255, 255, 255, 0.05); }
+.orbital-ring.ring-3 { width: 1420px; height: 1420px; }
+
+/* ==========================================================================
+   1. NAVIGATION BAR (Light, refined editorial header)
+   ========================================================================== */
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 44px;
+  background: rgba(11, 13, 18, 0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* TECH LORE Editorial Mark */
+.brand-editorial-mark {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.brand-editorial-symbol {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--accent-cyan);
+  line-height: 1;
+}
+
+.brand-editorial-text {
+  font-family: var(--font-eyebrow);
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #f1f5f9;
+}
+
+.brand-sub-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  margin-left: 2px;
+}
+
+/* Navigation Links (Light, typography-first, no heavy boxes) */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  position: relative;
+  transition: all 0.16s ease;
+}
+
+.nav-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.nav-tab-btn.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: var(--accent-cyan);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quick-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  width: 210px;
+  transition: all 0.18s;
+}
+
+.quick-search-box:focus-within {
+  border-color: var(--border-medium);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+.quick-search-box input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 12.5px;
+}
+
+.btn-quiet-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  transition: all 0.16s;
+}
+
+.btn-quiet-action:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-medium);
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   2. HERO SECTION: "TECH LORE / Before it was everywhere."
+   ========================================================================== */
+
+.hero-editorial-section {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 72px 32px 32px 32px;
+  max-width: 1120px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Eyebrow Label: TECH LORE */
+.hero-eyebrow-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.hero-eyebrow-symbol {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--accent-cyan);
+  line-height: 1;
+}
+
+.hero-eyebrow-label {
+  font-family: var(--font-eyebrow);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+}
+
+/* Dominant Headline: "Before it was everywhere." */
+.hero-headline-dominant {
+  font-family: var(--font-display);
+  font-size: 66px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+  margin-bottom: 20px;
+  max-width: 880px;
+}
+
+/* Archive Metadata Information Line */
+.hero-metadata-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 24px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.metadata-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.metadata-val {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.metadata-lbl {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.metadata-dot {
+  color: var(--border-medium);
+  user-select: none;
+}
+
+/* ==========================================================================
+   3. HORIZONTAL ARCHIVE RULER (Museum archive index + data timeline)
+   ========================================================================== */
+
+.archive-ruler-container {
+  width: 100%;
+  padding: 16px 44px 12px 44px;
+  border-top: 1px solid var(--border-hairline);
+  border-bottom: 1px solid var(--border-hairline);
+  background: rgba(14, 17, 24, 0.65);
+  position: relative;
+  z-index: 10;
+}
+
+.archive-ruler-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ruler-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ruler-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ruler-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.ruler-reset-btn {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.ruler-reset-btn .reset-tag {
+  color: var(--text-dim);
+}
+
+.ruler-reset-btn:hover .reset-tag {
+  color: var(--text-secondary);
+}
+
+.ruler-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.archive-ruler-track {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 4px;
+  position: relative;
+  padding: 8px 0 2px 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.archive-ruler-track::-webkit-scrollbar {
+  display: none;
+}
+
+.ruler-continuous-baseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.ruler-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  cursor: pointer;
+  padding: 4px 2px;
+  border-radius: 4px;
+  transition: all 0.16s ease;
+  position: relative;
+}
+
+.ruler-node:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ruler-density-wrapper {
+  height: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.ruler-density-bar {
+  width: 2.5px;
+  background: var(--text-muted);
+  border-radius: 1px;
+  transition: all 0.2s ease;
+}
+
+.ruler-density-dot-quiet {
+  width: 1.5px;
+  height: 1.5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.ruler-node:hover .ruler-density-bar {
+  background: var(--accent-cyan);
+}
+
+.ruler-node.active .ruler-density-bar {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+.ruler-tick-mark {
+  width: 1px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.2);
+  margin-bottom: 4px;
+}
+
+.ruler-tick-mark.prominent {
+  background: rgba(255, 255, 255, 0.45);
+  height: 6px;
+}
+
+.ruler-node.active .ruler-tick-mark {
+  background: var(--accent-cyan);
+  width: 2px;
+  height: 8px;
+}
+
+.ruler-year-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  transition: color 0.15s;
+}
+
+.ruler-node.has-events .ruler-year-text {
+  color: var(--text-secondary);
+}
+
+.ruler-node:hover .ruler-year-text {
+  color: #ffffff;
+}
+
+.ruler-node.active .ruler-year-text {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+.ruler-count-caption {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+.ruler-node.active .ruler-count-caption {
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   4. TOPIC ARCHIVAL INDEX (Curated Digital Specimen Selector)
+   ========================================================================== */
+
+.topic-index-section {
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 24px 44px 0 44px;
+  width: 100%;
+}
+
+.topic-index-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-hairline);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.index-title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.index-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.index-count {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.index-clear-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-cyan);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.index-clear-btn:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.index-limit-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-amber);
+}
+
+.index-meta-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.index-instruction {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-family: var(--font-sans);
+}
+
+.index-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot.active {
+  color: var(--text-secondary);
+}
+
+.legend-dot.focus {
+  color: var(--accent-cyan);
+}
+
+.topic-index-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 1400px) {
+  .topic-index-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .topic-index-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.topic-index-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid var(--border-hairline);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-height: 34px;
+}
+
+.topic-index-item:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: var(--border-subtle);
+}
+
+.topic-item-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 16px;
+}
+
+.topic-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.topic-item-name {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+/* 3 States: Inactive, Active, Focused */
+.topic-index-item.is-inactive .topic-item-name {
+  color: var(--text-muted);
+}
+
+.topic-index-item.is-inactive:hover .topic-item-name {
+  color: var(--text-secondary);
+}
+
+.topic-index-item.is-active {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
+}
+
+.topic-index-item.is-active .topic-item-name {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.topic-index-item.is-active .topic-item-num {
+  color: var(--text-secondary);
+}
+
+.topic-index-item.is-focused {
+  background: rgba(56, 189, 248, 0.06);
+  border-color: var(--accent-cyan);
+}
+
+.topic-index-item.is-focused .topic-item-name {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.topic-index-item.is-focused .topic-item-num {
+  color: var(--accent-cyan);
+}
+
+.topic-badge-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+
+.topic-focus-btn {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-hairline);
+  border-radius: 3px;
+  padding: 1px 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.topic-focus-btn:hover {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.topic-remove-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1px 3px;
+  line-height: 1;
+  border-radius: 2px;
+  transition: all 0.15s;
+}
+
+.topic-remove-btn:hover {
+  color: var(--accent-rose);
+  background: rgba(244, 63, 94, 0.1);
+}
+
+.topic-state-tag {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.topic-state-tag.focus {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--accent-cyan);
+  cursor: default;
+}
+
+.topic-state-tag.active {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+}
+
+.topic-state-tag.active:hover {
+  border-color: var(--accent-rose);
+  color: #ffffff;
+  background: rgba(244, 63, 94, 0.15);
+}
+
+.tag-close {
+  font-size: 8px;
+  margin-left: 2px;
+  opacity: 0.7;
+}
+
+.topic-hover-hint {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.topic-index-item:hover .topic-hover-hint {
+  opacity: 0.8;
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   5. INVESTIGATION FILTERS DRAWER
+   ========================================================================== */
+
+.filters-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  animation: fadeIn 0.18s ease;
+}
+
+.filters-drawer-panel {
+  width: 380px;
+  max-width: 100%;
+  height: 100%;
+  background: #11141c;
+  border-left: 1px solid var(--border-subtle);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-elevated);
+  animation: slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.filters-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.filters-drawer-title {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.drawer-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.drawer-reset-btn:hover {
+  color: var(--accent-cyan);
+}
+
+.drawer-close-btn {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawer-close-btn:hover {
+  color: #fff;
+}
+
+.drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawer-section-title {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.drawer-section-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.drawer-categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.drawer-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  transition: all 0.15s ease;
+  text-align: left;
+  cursor: pointer;
+}
+
+.drawer-cat-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+
+.drawer-cat-item.active {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}
+
+.drawer-cat-item .cat-label {
+  flex: 1;
+}
+
+.drawer-cat-item .cat-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.drawer-cat-item.active .cat-count {
+  color: var(--accent-cyan);
+}
+
+.drawer-cat-item .cat-bullet-all {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.drawer-temporal-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.drawer-footer-note {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+.btn-filter-counter {
+  background: var(--accent-cyan);
+  color: #0b0d12;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  line-height: 1;
+}
+
+/* ==========================================================================
+   4. TREND WORKBENCH (Split-Screen: Chart = Evidence, Rail = Context)
+   ========================================================================== */
+
+.workbench-split-layout {
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 28px;
+  padding: 28px 44px 56px 44px;
+  max-width: 1720px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+}
+
+@media (max-width: 1240px) {
+  .workbench-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left Pane: Trend Curves & Research Gauges */
+.workbench-left-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Calmer container with internal hierarchy */
+.workbench-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  padding: 22px 24px;
+  position: relative;
+}
+
+.workbench-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.card-eyebrow-section {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.card-title {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Topic Selector Strip (Crisp chips with clear affordances) */
+.topic-selector-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.topic-chip-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-hairline);
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+
+.topic-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+}
+
+.topic-chip-btn.selected {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-subtle);
+  color: #fff;
+}
+
+.topic-chip-btn.is-primary {
+  border-color: var(--accent-cyan);
+}
+
+.topic-chip-btn .topic-color-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Trend SVG Chart Viewport */
+.trend-chart-viewport {
+  width: 100%;
+  height: 380px;
+  background: #0d1017;
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-svg-layer {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Floating Crosshair Cursor Readout Box */
+.chart-cursor-info-box {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(13, 16, 23, 0.94);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow-subtle);
+  z-index: 20;
+  backdrop-filter: blur(8px);
+}
+
+/* ==========================================================================
+   5. STATISTICAL GAUGES (Research Measurements, Not SaaS KPI Cards)
+   ========================================================================== */
+
+.stats-measurement-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .stats-measurement-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-metric-cell {
+  padding: 16px 20px;
+  border-right: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-metric-cell:last-child {
+  border-right: none;
+}
+
+.stat-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.stat-metric-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.stat-metric-num {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.stat-metric-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   6. EVIDENCE TIMELINE RAIL (Historical Context, Research Receipts)
+   ========================================================================== */
+
+.workbench-right-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-rail-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.rail-section-name {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.rail-section-desc {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-top: 2px;
+}
+
+.timeline-entries-stream {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-left: 24px;
+}
+
+/* Subtle continuous vertical rail line */
+.timeline-entries-stream::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 9px;
+  width: 1px;
+  background: var(--border-hairline);
+}
+
+/* Year Anchor Pill */
+.timeline-year-anchor {
+  position: relative;
+  margin-top: 6px;
+}
+
+.timeline-year-pill {
+  position: absolute;
+  left: -24px;
+  top: -8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  z-index: 5;
+}
+
+/* Timeline Card Node (Calm, uncrowded, clear hierarchy) */
+.timeline-card-node {
+  position: relative;
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: all 0.16s ease;
+}
+
+.timeline-card-node:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: var(--border-subtle);
+}
+
+.timeline-card-node.highlighted {
+  border-color: var(--accent-cyan);
+  background: rgba(56, 189, 248, 0.03);
+}
+
+/* Bullet Dot on Rail */
+.timeline-node-bullet {
+  position: absolute;
+  left: -19px;
+  top: 16px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 1.5px solid var(--text-dim);
+  z-index: 4;
+}
+
+.timeline-node-bullet.active {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan);
+}
+
+.timeline-card-title {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #f8fafc;
+  margin-bottom: 6px;
+}
+
+.timeline-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.badge-tag-pill {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+}
+
+/* Evidence Drawer: Research receipts */
+.evidence-drawer-content {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.evidence-fact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.evidence-fact-label {
+  min-width: 90px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.source-link-out {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent-cyan);
+}
+.source-link-out:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   7. ML CLUSTER STUDIO (Research Laboratory Feel)
+   ========================================================================== */
+
+.cluster-studio-container {
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 28px 44px 56px 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cluster-controls-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cluster-param-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.k-slider-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.k-slider-input {
+  accent-color: var(--accent-cyan);
+  width: 120px;
+}
+
+.silhouette-meter-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.cluster-studio-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .cluster-studio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.scatter-plot-canvas-box {
+  width: 100%;
+  height: 480px;
+  background: #0d1017;
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  position: relative;
+}
+
+.archetype-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.archetype-profile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.archetype-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.archetype-name {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.archetype-topic-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+/* ==========================================================================
+   8. PROVENANCE & METHODOLOGY DOSSIER (Receipts / Research Notes)
+   ========================================================================== */
+
+.provenance-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 36px 32px 56px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.provenance-article {
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  padding: 32px 36px;
+  line-height: 1.65;
+}
+
+.provenance-heading {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  font-style: italic;
+  margin-bottom: 12px;
+  color: #fff;
+}
+
+.provenance-subheading {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 28px;
+  margin-bottom: 8px;
+  color: var(--accent-cyan);
+}
+
+.audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.audit-table th, .audit-table td {
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.audit-table th {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+
+.audit-badge-pass {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent-emerald);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* ==========================================================================
+   9. FLOATING ACTION RAIL (Quiet right-hand quick jumps)
+   ========================================================================== */
+
+.floating-action-rail {
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  background: rgba(18, 21, 29, 0.85);
+  border: 1px solid var(--border-hairline);
+  border-radius: 24px;
+  backdrop-filter: blur(14px);
+}
+
+.rail-tool-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  position: relative;
+}
+
+.rail-tool-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rail-tool-btn.active {
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--accent-cyan);
+}
+
+.rail-tool-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 44px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: all 0.15s;
+}
+
+.rail-tool-btn:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 12px 18px;
+  }
+  .hero-headline-dominant {
+    font-size: 38px;
+  }
+  .workbench-split-layout {
+    padding: 18px;
+  }
+  .floating-action-rail {
+    display: none;
+  }
+}
