@@ -1,24 +1,37 @@
 import React from 'react';
-import { Search, Compass, GitMerge, FileCheck2, Download } from 'lucide-react';
+import { Compass, GitMerge } from 'lucide-react';
+import { ArchiveSearch } from './ArchiveSearch';
+import type { Topic, EvidenceEvent } from '../types';
 
 interface HeaderProps {
-  activeTab: 'workbench' | 'clustering' | 'provenance';
-  setActiveTab: (tab: 'workbench' | 'clustering' | 'provenance') => void;
+  activeTab: 'workbench' | 'clustering';
+  setActiveTab: (tab: 'workbench' | 'clustering') => void;
+  topics: Topic[];
+  events: EvidenceEvent[];
   searchQuery: string;
   setSearchQuery: (q: string) => void;
-  onExport: () => void;
+  onSelectTopic: (topicId: string) => void;
+  onSelectEvent: (event: EvidenceEvent) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
+  topics,
+  events,
   searchQuery,
   setSearchQuery,
-  onExport
+  onSelectTopic,
+  onSelectEvent
 }) => {
+  const handleWorkbenchClick = () => {
+    setActiveTab('workbench');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <header className="top-nav">
-      <div className="brand-group">
+      <div className="brand-group" onClick={handleWorkbenchClick} style={{ cursor: 'pointer' }}>
         <div className="brand-editorial-mark">
           <span className="brand-editorial-symbol">⌁</span>
           <span className="brand-editorial-text">TECH LORE</span>
@@ -29,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
       <nav className="nav-links">
         <button
           className={`nav-tab-btn ${activeTab === 'workbench' ? 'active' : ''}`}
-          onClick={() => setActiveTab('workbench')}
+          onClick={handleWorkbenchClick}
         >
           <Compass size={14} />
           <span>Investigation Deck</span>
@@ -42,31 +55,18 @@ export const Header: React.FC<HeaderProps> = ({
           <GitMerge size={14} />
           <span>Cluster Lab</span>
         </button>
-
-        <button
-          className={`nav-tab-btn ${activeTab === 'provenance' ? 'active' : ''}`}
-          onClick={() => setActiveTab('provenance')}
-        >
-          <FileCheck2 size={14} />
-          <span>Methodology & Receipts</span>
-        </button>
       </nav>
 
       <div className="header-actions">
-        <div className="quick-search-box">
-          <Search size={13} />
-          <input
-            type="text"
-            placeholder="Search topics, papers, catalysts..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <button className="btn-quiet-action" onClick={onExport} title="Export verified dataset and analysis archive (JSON)">
-          <Download size={12} />
-          <span>Export Archive</span>
-        </button>
+        {/* Real Functional Archive Search (Sections 13–20) */}
+        <ArchiveSearch
+          topics={topics}
+          events={events}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSelectTopic={onSelectTopic}
+          onSelectEvent={onSelectEvent}
+        />
       </div>
     </header>
   );

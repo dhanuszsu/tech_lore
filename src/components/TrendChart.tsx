@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import type { Topic, EvidenceEvent } from '../types';
 import { Activity, SlidersHorizontal } from 'lucide-react';
 
@@ -6,6 +6,7 @@ interface TrendChartProps {
   dates: string[];
   seriesData: Record<string, number[]>;
   selectedTopics: Topic[];
+  primaryTopic: Topic;
   events: EvidenceEvent[];
   activeYear: number | null;
   onSelectEvent: (event: EvidenceEvent) => void;
@@ -18,6 +19,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   dates,
   seriesData,
   selectedTopics,
+  primaryTopic,
   events,
   activeYear,
   onSelectEvent,
@@ -56,26 +58,32 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   const visibleDates = useMemo(() => dates.slice(startIndex, endIndex + 1), [dates, startIndex, endIndex]);
   const visibleCount = visibleDates.length;
 
-  // SVG dimensions
-  const width = 860;
-  const height = 360;
-  const padLeft = 45;
-  const padRight = 25;
-  const padTop = 25;
-  const padBottom = 35;
+  // Hero SVG Dimensions (640px height canvas)
+  const width = 1200;
+  const height = 640;
+  const padLeft = 52;
+  const padRight = 32;
+  const padTop = 36;
+  const padBottom = 48;
   const plotW = width - padLeft - padRight;
   const plotH = height - padTop - padBottom;
 
-  const getX = (idx: number) => {
-    return padLeft + ((idx - startIndex) / Math.max(1, visibleCount - 1)) * plotW;
-  };
+  const getX = useCallback(
+    (idx: number) => {
+      return padLeft + ((idx - startIndex) / Math.max(1, visibleCount - 1)) * plotW;
+    },
+    [startIndex, visibleCount, plotW]
+  );
 
-  const getY = (val: number, maxVal = 100, minVal = 0) => {
-    const clamped = Math.max(minVal, Math.min(maxVal, val));
-    return padTop + plotH - ((clamped - minVal) / Math.max(1, maxVal - minVal)) * plotH;
-  };
+  const getY = useCallback(
+    (val: number, maxVal = 100, minVal = 0) => {
+      const clamped = Math.max(minVal, Math.min(maxVal, val));
+      return padTop + plotH - ((clamped - minVal) / Math.max(1, maxVal - minVal)) * plotH;
+    },
+    [plotH]
+  );
 
-  // Compute velocity series
+  // Compute processed series (standard interest vs monthly change)
   const processedSeries = useMemo(() => {
     const res: Record<string, number[]> = {};
     for (const t of selectedTopics) {
@@ -107,15 +115,31 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     return [Math.floor(minV), Math.ceil(maxV)];
   }, [isVelocityMode, processedSeries, selectedTopics, startIndex, endIndex]);
 
-  // Milestone points
+  // Milestone points strictly filtered by primary focused topic
   const activeMilestones = useMemo(() => {
-    const selectedIds = new Set(selectedTopics.map((t) => t.id));
     return events.filter((ev) => {
+      if (!ev.topics.includes(primaryTopic.id)) return false;
       const evDateIdx = dates.findIndex((d) => d === ev.date.slice(0, 7));
       if (evDateIdx < startIndex || evDateIdx > endIndex) return false;
-      return ev.topics.some((tid) => selectedIds.has(tid));
+      return true;
     });
-  }, [events, selectedTopics, dates, startIndex, endIndex]);
+  }, [events, primaryTopic.id, dates, startIndex, endIndex]);
+
+  // Find currently selected event if any
+  const selectedEvent = useMemo(() => {
+    if (!selectedEventId) return null;
+    return events.find((e) => e.id === selectedEventId) || null;
+  }, [events, selectedEventId]);
+
+  const selectedEventPoint = useMemo(() => {
+    if (!selectedEvent) return null;
+    const evDateIdx = dates.findIndex((d) => d === selectedEvent.date.slice(0, 7));
+    if (evDateIdx < startIndex || evDateIdx > endIndex) return null;
+    const px = getX(evDateIdx);
+    const rawVal = (processedSeries[primaryTopic.id] || [])[evDateIdx] || 50;
+    const py = getY(rawVal, maxY, minY);
+    return { x: px, y: py, dateIdx: evDateIdx, event: selectedEvent };
+  }, [selectedEvent, dates, startIndex, endIndex, processedSeries, primaryTopic.id, maxY, minY, getX, getY]);
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -133,13 +157,13 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   const activeDate = hoverIndex !== null ? dates[hoverIndex] : visibleDates[visibleDates.length - 1];
 
   return (
-    <div className="workbench-card" ref={containerRef}>
+    <div className="workbench-card hero-graph-card" ref={containerRef}>
       <div className="workbench-card-header">
         <div className="card-title-group">
-          <span className="card-eyebrow-section">QUANTITATIVE EVIDENCE</span>
+          <span className="card-eyebrow-section">{primaryTopic.name.toUpperCase()} · ATTENTION TRAJECTORY</span>
           <h3 className="card-title">Trajectory & Velocity Dynamics</h3>
           <p className="card-subtitle">
-            Relative search volume normalized [0–100] relative to peak historical attention (2004–2026).
+            Search interest scaled from 0 to 100 relative to highest historical point.
           </p>
         </div>
 
@@ -169,15 +193,15 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               borderColor: isVelocityMode ? 'var(--accent-cyan)' : 'var(--border-hairline)',
               color: isVelocityMode ? 'var(--accent-cyan)' : 'var(--text-secondary)'
             }}
-            title="Toggle between absolute normalized interest and monthly velocity derivative"
+            title="Toggle between standard interest curve and rate of monthly change"
           >
             <Activity size={12} />
-            <span>{isVelocityMode ? 'Velocity Derivative (Δ/Mo)' : 'Standard Curve [0–100]'}</span>
+            <span>{isVelocityMode ? 'Monthly Change (Δ/Mo)' : 'Standard Curve [0–100]'}</span>
           </button>
         </div>
       </div>
 
-      <div className="trend-chart-viewport">
+      <div className="trend-chart-viewport hero-viewport">
         <svg
           className="chart-svg-layer"
           viewBox={`0 0 ${width} ${height}`}
@@ -189,10 +213,14 @@ export const TrendChart: React.FC<TrendChartProps> = ({
           <defs>
             {selectedTopics.map((t) => (
               <linearGradient key={`grad-${t.id}`} id={`grad-${t.id}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={t.color} stopOpacity="0.2" />
+                <stop offset="0%" stopColor={t.color} stopOpacity={t.id === primaryTopic.id ? '0.28' : '0.12'} />
                 <stop offset="100%" stopColor={t.color} stopOpacity="0.0" />
               </linearGradient>
             ))}
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
           </defs>
 
           {/* Grid lines */}
@@ -209,13 +237,13 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                   x2={width - padRight}
                   y2={y}
                   stroke="rgba(255, 255, 255, 0.05)"
-                  strokeDasharray="2 2"
+                  strokeDasharray="3 3"
                 />
                 <text
-                  x={padLeft - 8}
+                  x={padLeft - 10}
                   y={y + 4}
                   fill="var(--text-dim)"
-                  fontSize="9.5"
+                  fontSize="11"
                   fontFamily="var(--font-mono)"
                   textAnchor="end"
                 >
@@ -233,12 +261,12 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               const x = getX(i);
               return (
                 <g key={`x-tick-${d}`}>
-                  <line x1={x} y1={padTop + plotH} x2={x} y2={padTop + plotH + 4} stroke="rgba(255,255,255,0.15)" />
+                  <line x1={x} y1={padTop + plotH} x2={x} y2={padTop + plotH + 5} stroke="rgba(255,255,255,0.18)" />
                   <text
                     x={x}
-                    y={height - 12}
+                    y={height - 16}
                     fill="var(--text-dim)"
-                    fontSize="10"
+                    fontSize="11"
                     fontFamily="var(--font-mono)"
                     textAnchor="middle"
                   >
@@ -250,8 +278,62 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             return null;
           })}
 
+          {/* Highlight Line for Selected Catalyst */}
+          {selectedEventPoint && (
+            <g pointerEvents="none" className="catalyst-highlight-group">
+              <line
+                x1={selectedEventPoint.x}
+                y1={padTop}
+                x2={selectedEventPoint.x}
+                y2={padTop + plotH}
+                stroke="#38bdf8"
+                strokeWidth="1.5"
+                strokeDasharray="4 3"
+                opacity="0.8"
+              />
+              <circle
+                cx={selectedEventPoint.x}
+                cy={selectedEventPoint.y}
+                r="14"
+                fill="none"
+                stroke="#38bdf8"
+                strokeWidth="1.5"
+                opacity="0.45"
+                className="pulse-ring"
+              />
+              {/* Event title callout tag on chart */}
+              <g transform={`translate(${Math.min(width - padRight - 160, Math.max(padLeft + 10, selectedEventPoint.x - 70))}, ${Math.max(padTop + 10, selectedEventPoint.y - 28)})`}>
+                <rect
+                  x="0"
+                  y="0"
+                  width="140"
+                  height="20"
+                  rx="4"
+                  fill="rgba(15, 23, 42, 0.92)"
+                  stroke="#38bdf8"
+                  strokeWidth="1"
+                />
+                <text
+                  x="70"
+                  y="13"
+                  fill="#ffffff"
+                  fontSize="9.5"
+                  fontFamily="var(--font-mono)"
+                  textAnchor="middle"
+                >
+                  {selectedEventPoint.event.date} · Catalyst
+                </text>
+              </g>
+            </g>
+          )}
+
           {/* Curve Area & Paths */}
-          {selectedTopics.map((topic) => {
+          {/* Render non-primary overlay curves first, then primary focused topic on top */}
+          {[
+            ...selectedTopics.filter((t) => t.id !== primaryTopic.id),
+            primaryTopic
+          ].map((topic) => {
+            const isPrimary = topic.id === primaryTopic.id;
             const raw = processedSeries[topic.id] || [];
             if (raw.length === 0) return null;
 
@@ -283,7 +365,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                   d={pathD}
                   fill="none"
                   stroke={topic.color}
-                  strokeWidth="2"
+                  strokeWidth={isPrimary ? '3' : '1.8'}
+                  strokeOpacity={isPrimary ? 1 : 0.65}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
@@ -291,12 +374,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({
             );
           })}
 
-          {/* Milestone Event Pins directly on the curves */}
+          {/* Milestone Event Pins strictly belonging to selected/focused topic */}
           {activeMilestones.map((ev) => {
             const evDateIdx = dates.findIndex((d) => d === ev.date.slice(0, 7));
             if (evDateIdx < startIndex || evDateIdx > endIndex) return null;
 
-            const primaryTopic = selectedTopics.find((t) => ev.topics.includes(t.id)) || selectedTopics[0];
             const rawVal = (processedSeries[primaryTopic.id] || [])[evDateIdx] || 50;
             const px = getX(evDateIdx);
             const py = getY(rawVal, maxY, minY);
@@ -309,14 +391,35 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 style={{ cursor: 'pointer' }}
                 onClick={() => onSelectEvent(ev)}
               >
-                <circle
-                  cx={px}
-                  cy={py}
-                  r={isSelected ? 6 : 4}
-                  fill={isSelected ? '#38bdf8' : '#0d1017'}
-                  stroke={isSelected ? '#ffffff' : primaryTopic.color}
-                  strokeWidth={isSelected ? '2' : '1.5'}
-                />
+                {isSelected ? (
+                  <g>
+                    <circle
+                      cx={px}
+                      cy={py}
+                      r="9"
+                      fill="rgba(56, 189, 248, 0.25)"
+                      stroke="#38bdf8"
+                      strokeWidth="1.5"
+                    />
+                    <circle
+                      cx={px}
+                      cy={py}
+                      r="5"
+                      fill="#38bdf8"
+                      stroke="#ffffff"
+                      strokeWidth="2"
+                    />
+                  </g>
+                ) : (
+                  <circle
+                    cx={px}
+                    cy={py}
+                    r="4.5"
+                    fill="#0b0e14"
+                    stroke={primaryTopic.color}
+                    strokeWidth="2"
+                  />
+                )}
               </g>
             );
           })}
@@ -329,22 +432,23 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 y1={padTop}
                 x2={getX(hoverIndex)}
                 y2={padTop + plotH}
-                stroke="rgba(255, 255, 255, 0.3)"
-                strokeDasharray="2 2"
+                stroke="rgba(255, 255, 255, 0.35)"
+                strokeDasharray="3 3"
               />
               {selectedTopics.map((topic) => {
                 const val = (processedSeries[topic.id] || [])[hoverIndex] || 0;
                 const hx = getX(hoverIndex);
                 const hy = getY(val, maxY, minY);
+                const isPrimary = topic.id === primaryTopic.id;
                 return (
                   <circle
                     key={`hover-dot-${topic.id}`}
                     cx={hx}
                     cy={hy}
-                    r={3.5}
+                    r={isPrimary ? 5 : 3.5}
                     fill={topic.color}
                     stroke="#ffffff"
-                    strokeWidth="1.2"
+                    strokeWidth={isPrimary ? '2' : '1.2'}
                   />
                 );
               })}
@@ -354,20 +458,23 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
         {/* Live Hover Scrub Info Box */}
         <div className="chart-cursor-info-box">
-          <div style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', marginBottom: '4px' }}>
+          <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)', marginBottom: '5px' }}>
             DATE: <strong style={{ color: '#fff' }}>{activeDate}</strong>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {selectedTopics.map((topic) => {
               const targetIdx = hoverIndex !== null ? hoverIndex : visibleDates.length - 1 + startIndex;
               const curVal = (processedSeries[topic.id] || [])[targetIdx] || 0;
+              const isPrimary = topic.id === primaryTopic.id;
               return (
-                <div key={`info-${topic.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', fontSize: '11.5px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: topic.color }}></span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{topic.name}</span>
+                <div key={`info-${topic.id}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', fontSize: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: isPrimary ? '8px' : '6px', height: isPrimary ? '8px' : '6px', borderRadius: '50%', backgroundColor: topic.color }}></span>
+                    <span style={{ color: isPrimary ? '#ffffff' : 'var(--text-secondary)', fontWeight: isPrimary ? 600 : 400 }}>
+                      {topic.name} {isPrimary ? '●' : ''}
+                    </span>
                   </div>
-                  <strong style={{ fontFamily: 'var(--font-mono)', color: '#ffffff' }}>
+                  <strong style={{ fontFamily: 'var(--font-mono)', color: isPrimary ? 'var(--accent-cyan)' : '#ffffff' }}>
                     {curVal}{isVelocityMode ? ' Δ' : ''}
                   </strong>
                 </div>

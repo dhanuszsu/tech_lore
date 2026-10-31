@@ -40,19 +40,6 @@ N_TIMESTEPS = len(dates)
 TOPICS = [
     # Modern Generative AI & Frontier
     {
-        "id": "chatgpt",
-        "name": "ChatGPT",
-        "category": "Generative AI",
-        "introduced": "2022-11",
-        "color": "#10b981", # Emerald
-        "description": "OpenAI conversational language model that triggered mainstream consumer AI adoption.",
-        "curve_type": "breakout_spike_stabilize",
-        "peak_date": "2023-04",
-        "peak_val": 100,
-        "floor": 0,
-        "stabilized_val": 78
-    },
-    {
         "id": "large_language_models",
         "name": "Large Language Models",
         "category": "Generative AI",
@@ -786,7 +773,7 @@ EVIDENCE_EVENTS = [
         "title": "OpenAI Releases GPT-4 Multimodal Frontier Model",
         "category": "Product & Model Releases",
         "category_badge": "blue",
-        "topics": ["large_language_models", "chatgpt", "generative_ai"],
+        "topics": ["large_language_models", "generative_ai"],
         "delta_velocity": "+195% MoM Index Peak",
         "confidence": 1.0,
         "source": "GPT-4 Technical Report (ArXiv:2303.08774)",
@@ -816,7 +803,7 @@ EVIDENCE_EVENTS = [
         "title": "OpenAI Launches ChatGPT Research Preview",
         "category": "Search Velocity Spikes",
         "category_badge": "yellow",
-        "topics": ["chatgpt", "generative_ai", "large_language_models"],
+        "topics": ["large_language_models", "generative_ai"],
         "delta_velocity": "+12,400% Historic 60-Day Acceleration",
         "confidence": 1.0,
         "source": "OpenAI Official Announcement",
@@ -996,11 +983,11 @@ SUPPORTING_EVENTS = [
     ("2025-12-05", 2025, "NVIDIA Announces Blackwell Ultra AI Accelerators", "Hardware & Infrastructure", "green", ["ai_agents", "deep_learning"], "+28% GPU Infrastructure Inquiries", "NVIDIA Corp"),
     ("2025-05-20", 2025, "Google I/O Unveils Gemini 2.5 Multi-Agent Orchestration", "Product & Model Releases", "blue", ["ai_agents", "large_language_models"], "+45% Enterprise Queries", "Google I/O"),
     ("2024-11-18", 2024, "Anthropic Launches Computer Use Beta", "Research Breakthroughs", "purple", ["ai_agents"], "+88% Agentic UI Automation Queries", "Anthropic"),
-    ("2024-05-13", 2024, "OpenAI Announces GPT-4o Real-Time Multimodal Voice", "Cultural Moments", "cyan", ["chatgpt", "large_language_models"], "+120% Viral Demonstration Influx", "OpenAI"),
+    ("2024-05-13", 2024, "OpenAI Announces GPT-4o Real-Time Multimodal Voice", "Cultural Moments", "cyan", ["large_language_models", "generative_ai"], "+120% Viral Demonstration Influx", "OpenAI"),
     ("2023-12-06", 2023, "Google DeepMind Announces Gemini 1.0 Multimodal Family", "Product & Model Releases", "blue", ["large_language_models"], "+65% Model Benchmark Queries", "Google DeepMind"),
     ("2023-09-25", 2023, "Amazon Invests $4B in Anthropic", "Market & Industry Shocks", "magenta", ["large_language_models", "generative_ai"], "+38% Capital Allocation Coverage", "Wall Street Journal"),
     ("2023-04-12", 2023, "AutoGPT Becomes Fastest-Trending Repository in GitHub History", "Search Velocity Spikes", "yellow", ["ai_agents", "prompt_engineering"], "+620% Autonomous Loop Queries", "GitHub Archive"),
-    ("2023-02-07", 2023, "Microsoft Integrates GPT-4 into Bing Search Engine", "Product & Model Releases", "blue", ["chatgpt", "large_language_models"], "+210% Search Engine Queries", "Microsoft"),
+    ("2023-02-07", 2023, "Microsoft Integrates GPT-4 into Bing Search Engine", "Product & Model Releases", "blue", ["large_language_models"], "+210% Search Engine Queries", "Microsoft"),
     ("2022-10-15", 2022, "Midjourney v4 Released with Hyper-Detailed Artistry", "Product & Model Releases", "blue", ["midjourney"], "+165% Digital Artistry Influx", "Midjourney"),
     ("2022-04-06", 2022, "OpenAI Announces DALL-E 2 Inpainting & Photorealism", "Search Velocity Spikes", "yellow", ["generative_ai", "computer_vision"], "+340% Synthetic Image Search", "OpenAI"),
     ("2021-06-29", 2021, "GitHub and OpenAI Introduce GitHub Copilot AI Pair Programmer", "Product & Model Releases", "blue", ["generative_ai", "large_language_models"], "+110% Developer Tool Inquiries", "GitHub"),
@@ -1085,7 +1072,7 @@ kmeans_export = {
     "assignments_by_k": cluster_assignments,
     "topic_features": features_df.to_dict(orient="records"),
     "archetype_definitions": {
-        "Exponential Breakout": "Ultra-high compound growth, rapid acceleration, sustained post-launch persistence (e.g. ChatGPT, LLMs, AI Agents).",
+        "Exponential Breakout": "Ultra-high compound growth, rapid acceleration, sustained post-launch persistence (e.g. Large Language Models, Generative AI, AI Agents).",
         "Transient Hype / Flash-in-the-Pan": "Extreme single peak velocity followed by rapid >75% decay ratio (e.g. Metaverse, AlphaGo, Stable Diffusion initial peak).",
         "Sustained Industry Workhorse": "Resilient multi-decade persistence, moderate volatility, steady foundational utility (e.g. Machine Learning, NLP, Robotics).",
         "Mature / Secular Re-allocation": "Negative CAGR, declining interest, technology replaced by successor architectures (e.g. Expert Systems, SVMs, CNNs)."

@@ -135,7 +135,7 @@ export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({
               </div>
             ) : (
               <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
-                Full 22-year epoch active (2004–2026). Select any year in the horizontal scrubber above to isolate.
+                Full archive active (2004–2026). Select any year in the timeline ruler above to filter.
               </span>
             )}
           </div>
@@ -143,7 +143,7 @@ export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({
 
         {/* Footer info */}
         <div className="drawer-footer-note">
-          Filter selections instantaneously constrain both the quantitative curve pins and the chronological evidence rail.
+          Filters update both the trend graph markers and the catalysts list.
         </div>
       </div>
     </div>

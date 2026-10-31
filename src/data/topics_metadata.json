@@ -1,19 +1,6 @@
 {
   "topics": [
     {
-      "id": "chatgpt",
-      "name": "ChatGPT",
-      "category": "Generative AI",
-      "introduced": "2022-11",
-      "color": "#10b981",
-      "description": "OpenAI conversational language model that triggered mainstream consumer AI adoption.",
-      "curve_type": "breakout_spike_stabilize",
-      "peak_date": "2023-04",
-      "peak_val": 100,
-      "floor": 0,
-      "stabilized_val": 78
-    },
-    {
       "id": "large_language_models",
       "name": "Large Language Models",
       "category": "Generative AI",
@@ -314,10 +301,10 @@
     }
   ],
   "categories": [
-    "Deep Learning",
     "Generative AI",
-    "Adjacent Tech",
-    "Foundations"
+    "Foundations",
+    "Deep Learning",
+    "Adjacent Tech"
   ],
   "time_range": {
     "start": "2004-01",

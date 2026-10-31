@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { Topic, TopicFeatures, KMeansExport } from '../types';
-import { BarChart3, AlertTriangle } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 interface ClusterStudioProps {
   topics: Topic[];
@@ -15,12 +15,12 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
 }) => {
   const [k, setK] = useState<number>(kmeansData.best_k || 4);
   const [axisMode, setAxisMode] = useState<'pca' | 'growth_volatility' | 'peak_persistence'>('pca');
-  const [hoveredTopic, setHoveredTopic] = useState<TopicFeatures | null>(null);
+  const [hoveredTopic, setHoveredTopic] = useState<(TopicFeatures & { name?: string; color?: string; cluster_idx?: number }) | null>(null);
 
   const clusterPalette = ['#38bdf8', '#10b981', '#f59e0b', '#ec4899', '#a855f7', '#64748b'];
 
-  const currentCentroids = kmeansData.clusters_by_k[String(k)] || [];
-  const currentAssignments = kmeansData.assignments_by_k[String(k)] || [];
+  const currentCentroids = useMemo(() => kmeansData.clusters_by_k[String(k)] || [], [kmeansData, k]);
+  const currentAssignments = useMemo(() => kmeansData.assignments_by_k[String(k)] || [], [kmeansData, k]);
   const silhouette = kmeansData.silhouette_scores[String(k)] || 0;
 
   const topicsWithCluster = useMemo(() => {
@@ -41,11 +41,11 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
 
   const [minX, maxX, minY, maxY, labelX, labelY] = useMemo(() => {
     if (axisMode === 'pca') {
-      return [-3.5, 3.5, -3.0, 3.0, 'PCA Dimension 1 (Scale & Growth)', 'PCA Dimension 2 (Volatility & Decay)'];
+      return [-3.5, 3.5, -3.0, 3.0, 'Dimension 1 (Scale & Growth)', 'Dimension 2 (Changes & Longevity)'];
     } else if (axisMode === 'growth_volatility') {
-      return [-30, 260, 0, 16, 'Compound Annual Growth (CAGR %)', 'Rolling 12-Month Volatility (σ)'];
+      return [-30, 260, 0, 16, 'Growth Over Time (%)', 'Trend Changes (σ)'];
     } else {
-      return [0, 105, 0, 270, 'Peak Normalized Intensity [0–100]', 'Persistence (Months ≥ 50% Peak)'];
+      return [0, 105, 0, 270, 'Highest Interest (0–100)', 'How Long It Stayed Popular (Months)'];
     }
   }, [axisMode]);
 
@@ -67,16 +67,16 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
   };
 
   return (
-    <div className="cluster-studio-container" role="main" aria-label="Machine Learning Clustering Lab">
+    <div className="cluster-studio-container" role="main" aria-label="Technology Clustering Lab">
       {/* Parameter Control Header */}
       <div className="cluster-controls-banner">
         <div className="card-title-group">
-          <span className="card-eyebrow-section">EXPERIMENTAL ANALYSIS</span>
+          <span className="card-eyebrow-section">PATTERN ANALYSIS</span>
           <h2 className="card-title" style={{ fontSize: '17px' }}>
-            Unsupervised K-Means Trajectory Lab
+            Technology Cluster Lab
           </h2>
           <p className="card-subtitle">
-            Grouping 24 technology trajectories by mathematical behavior in standardized feature space.
+            Grouping {topics.length} technologies by similar patterns over time.
           </p>
         </div>
 
@@ -98,9 +98,9 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
           </div>
 
           {/* Silhouette Score Badge */}
-          <div className="silhouette-meter-badge" title="Silhouette Diagnostic evaluates mathematical separation (-1 to +1)">
+          <div className="silhouette-meter-badge" title="Cluster fit score (-1 to +1)">
             <BarChart3 size={13} color="var(--accent-cyan)" />
-            <span>Silhouette: <strong>{silhouette}</strong></span>
+            <span>Score: <strong>{silhouette}</strong></span>
             {k === kmeansData.best_k && (
               <span style={{ color: 'var(--accent-emerald)', fontSize: '11px' }}>
                 (Optimal)
@@ -122,9 +122,9 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
               color: 'var(--text-primary)'
             }}
           >
-            <option value="pca">PCA Space (78.5% Variance)</option>
-            <option value="growth_volatility">Growth (CAGR) × Volatility</option>
-            <option value="peak_persistence">Peak Intensity × Persistence</option>
+            <option value="pca">Main Patterns (PCA)</option>
+            <option value="growth_volatility">Growth vs Trend Changes</option>
+            <option value="peak_persistence">Highest Interest vs Duration</option>
           </select>
         </div>
       </div>
@@ -248,22 +248,22 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                 }}
               >
                 <div style={{ fontWeight: 600, fontSize: '12.5px', color: '#ffffff', marginBottom: '6px' }}>
-                  {hoveredTopic.topic_id}
+                  {hoveredTopic.name}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
-                  <div>CAGR: <strong style={{ color: 'var(--accent-emerald)' }}>+{hoveredTopic.cagr}%</strong></div>
-                  <div>Volatility: <strong>{hoveredTopic.volatility}σ</strong></div>
+                  <div>Growth: <strong style={{ color: 'var(--accent-emerald)' }}>+{hoveredTopic.cagr}%</strong></div>
+                  <div>Changes: <strong>{hoveredTopic.volatility}σ</strong></div>
                   <div>Peak: <strong>{hoveredTopic.peak_intensity}/100</strong></div>
-                  <div>Persistence: <strong>{hoveredTopic.persistence_months}m</strong></div>
-                  <div>Decay: <strong>{(hoveredTopic.decay_ratio * 100).toFixed(0)}%</strong></div>
-                  <div>Entropy: <strong>{hoveredTopic.entropy}</strong></div>
+                  <div>Popular: <strong>{hoveredTopic.persistence_months}m</strong></div>
+                  <div>Drop: <strong>{(hoveredTopic.decay_ratio * 100).toFixed(0)}%</strong></div>
+                  <div>Spread: <strong>{hoveredTopic.entropy}</strong></div>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Right Side: Cluster Archetype Profile Cards */}
+        {/* Right Side: Cluster Group Profile Cards */}
         <div className="archetype-cards-list">
           {currentCentroids.map((c, cIdx) => {
             const clusterColor = clusterPalette[cIdx % clusterPalette.length];
@@ -274,17 +274,17 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                 <div className="archetype-title-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: clusterColor }}></span>
-                    <span className="archetype-name">Archetype {cIdx + 1} ({memberTopics.length} Topics)</span>
+                    <span className="archetype-name">Pattern Group {cIdx + 1} ({memberTopics.length} Topics)</span>
                   </div>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-dim)' }}>
-                    Peak Mean: {c.peak_intensity.toFixed(0)}/100
+                    Peak Avg: {c.peak_intensity.toFixed(0)}/100
                   </span>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', margin: '6px 0' }}>
                   <div>Growth: <strong style={{ color: '#fff' }}>{c.cagr.toFixed(1)}%</strong></div>
-                  <div>Volatility: <strong style={{ color: '#fff' }}>{c.volatility.toFixed(1)}σ</strong></div>
-                  <div>Persistence: <strong style={{ color: '#fff' }}>{c.persistence_months.toFixed(0)}m</strong></div>
+                  <div>Changes: <strong style={{ color: '#fff' }}>{c.volatility.toFixed(1)}σ</strong></div>
+                  <div>Popular: <strong style={{ color: '#fff' }}>{c.persistence_months.toFixed(0)}m</strong></div>
                 </div>
 
                 <div className="archetype-topic-pills">
@@ -305,21 +305,6 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
             );
           })}
         </div>
-      </div>
-
-      {/* Methodology & Analytical Limitations Disclosure */}
-      <div className="workbench-card" style={{ marginTop: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', color: 'var(--accent-amber)' }}>
-          <AlertTriangle size={14} />
-          <h4 style={{ fontSize: '12.5px', fontWeight: 600, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-            Mathematical Assumptions & Interpretive Boundaries
-          </h4>
-        </div>
-        <ul style={{ paddingLeft: '18px', fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-          {kmeansData.limitations.map((lim, idx) => (
-            <li key={`lim-${idx}`} style={{ marginBottom: '3px' }}>{lim}</li>
-          ))}
-        </ul>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ interface TopicIndexProps {
   onToggleTopic: (topicId: string) => void;
   onSetFocusTopic: (topicId: string) => void;
   onClearOverlays: () => void;
+  searchQuery?: string;
 }
 
 export const TopicIndex: React.FC<TopicIndexProps> = ({
@@ -16,11 +17,14 @@ export const TopicIndex: React.FC<TopicIndexProps> = ({
   primaryTopicId,
   onToggleTopic,
   onSetFocusTopic,
-  onClearOverlays
+  onClearOverlays,
+  searchQuery = ''
 }) => {
   const [showLimitWarning, setShowLimitWarning] = useState<boolean>(false);
 
   const isAtLimit = selectedTopicIds.length >= 6;
+  const q = searchQuery.trim().toLowerCase();
+  const hasSearch = q.length > 0;
 
   const handleItemClick = (topicId: string, isSelected: boolean, isFocused: boolean) => {
     if (!isSelected) {
@@ -48,7 +52,7 @@ export const TopicIndex: React.FC<TopicIndexProps> = ({
     <section className="topic-index-section" aria-label="Curated Topic Archive Index">
       <div className="topic-index-header">
         <div className="index-title-group">
-          <span className="index-eyebrow">TOPIC INDEX</span>
+          <span className="index-eyebrow">ACTIVE TOPICS</span>
           <span className="index-count">
             <strong style={{ color: isAtLimit ? 'var(--accent-amber)' : '#ffffff' }}>
               {selectedTopicIds.length} / 6
@@ -94,11 +98,21 @@ export const TopicIndex: React.FC<TopicIndexProps> = ({
           const isSelected = selectedTopicIds.includes(t.id);
           const isFocused = primaryTopicId === t.id;
 
+          const isMatch = hasSearch && (
+            t.name.toLowerCase().includes(q) ||
+            t.id.toLowerCase().includes(q.replace(/\s+/g, '_')) ||
+            t.category.toLowerCase().includes(q)
+          );
+
           let stateClass = 'is-inactive';
           if (isFocused) {
             stateClass = 'is-focused';
           } else if (isSelected) {
             stateClass = 'is-active';
+          }
+
+          if (hasSearch) {
+            stateClass += isMatch ? ' is-search-matched' : ' is-search-dimmed';
           }
 
           return (

@@ -1,15 +1,15 @@
 {
   "status": "PASSED_ALL_INTEGRITY_CHECKS",
-  "timestamp": "2026-10-29T21:28:11.907802",
-  "topics_count": 24,
+  "timestamp": "2026-10-31T22:17:39.677850",
+  "topics_count": 23,
   "time_steps_per_topic": 267,
-  "total_data_points": 6408,
+  "total_data_points": 6141,
   "min_value": 0.0,
   "max_value": 100.0,
   "null_values_count": 0,
   "evidence_events_count": 49,
-  "best_k_silhouette": 0.395,
-  "pca_variance_retained": "78.5%",
+  "best_k_silhouette": 0.428,
+  "pca_variance_retained": "77.4%",
   "verification_tests": [
     {
       "test": "Monotonic Monthly Date Sequence (2004-01 to 2026-03)",

@@ -25,21 +25,16 @@ export const HeroEvidence: React.FC<HeroEvidenceProps> = ({ totalEvents }) => {
         Before it was everywhere.
       </h1>
 
-      {/* 3. Archive Metadata Information Line (No explanatory paragraph, pure editorial metadata) */}
-      <div className="hero-metadata-line" role="region" aria-label="Corpus Scope Metadata">
+      {/* 3. Archive Metadata Information Line */}
+      <div className="hero-metadata-line" role="region" aria-label="Archive Scope">
         <span className="metadata-item">
-          <strong className="metadata-val">24</strong>
+          <strong className="metadata-val">23</strong>
           <span className="metadata-lbl">TOPICS</span>
         </span>
         <span className="metadata-dot">·</span>
         <span className="metadata-item">
           <strong className="metadata-val">2004—2026</strong>
-          <span className="metadata-lbl">EPOCH</span>
-        </span>
-        <span className="metadata-dot">·</span>
-        <span className="metadata-item">
-          <strong className="metadata-val">6,408</strong>
-          <span className="metadata-lbl">OBSERVATIONS</span>
+          <span className="metadata-lbl">ARCHIVE</span>
         </span>
         <span className="metadata-dot">·</span>
         <span className="metadata-item">
