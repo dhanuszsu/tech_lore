@@ -82,14 +82,16 @@ export const LoreCard: React.FC<LoreCardProps> = ({
         </div>
       </div>
 
-      {/* 2. Topic Name with subtle color identity dot */}
+      {/* 2. Topic Name with color identity dot inside the title element */}
       <div className="lore-card-title-row">
-        <span
-          className="lore-card-color-dot"
-          style={{ backgroundColor: topic.color }}
-          aria-hidden="true"
-        />
-        <h3 className="lore-card-title">{topic.name}</h3>
+        <h3 className="lore-card-title">
+          <span
+            className="lore-card-color-dot"
+            style={{ backgroundColor: topic.color }}
+            aria-hidden="true"
+          />
+          <span className="lore-card-title-text">{topic.name}</span>
+        </h3>
       </div>
 
       {/* 3. Date Range & Catalyst Count */}
@@ -164,9 +166,13 @@ export const LoreCard: React.FC<LoreCardProps> = ({
         </div>
       </div>
 
-      {/* 5. Editorial Navigation Cue at bottom-right */}
+      {/* 5. Authentic Descriptive Sentence (Restored Middle Content) */}
+      <p className="lore-card-summary">
+        {accessibleSummary}
+      </p>
+
+      {/* 6. Editorial Navigation Cue at bottom-right */}
       <div className="lore-card-footer">
-        <span className="sr-only">{accessibleSummary}</span>
         <span className="lore-card-view-cue">
           VIEW <span className="view-arrow" aria-hidden="true">→</span>
         </span>

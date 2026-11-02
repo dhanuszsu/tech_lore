@@ -132,17 +132,18 @@ export const TopicIndex: React.FC<TopicIndexProps> = ({
               {/* Archival Catalog Number */}
               <span className="topic-item-num">{indexNum}</span>
 
-              {/* Minimal Color Signal Dot */}
-              <span
-                className="topic-item-dot"
-                style={{
-                  backgroundColor: t.color,
-                  opacity: isSelected ? 1 : 0.35
-                }}
-              />
-
-              {/* Topic Name */}
-              <span className="topic-item-name">{t.name}</span>
+              {/* Topic Marker and Topic Name unified in the same element */}
+              <span className="topic-item-name">
+                <span
+                  className="topic-item-dot"
+                  style={{
+                    backgroundColor: t.color,
+                    opacity: isSelected ? 1 : 0.75
+                  }}
+                  aria-hidden="true"
+                />
+                <span className="topic-name-text">{t.name}</span>
+              </span>
 
               {/* Action Badges & Remove Triggers */}
               {isFocused ? (

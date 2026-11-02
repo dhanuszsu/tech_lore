@@ -73,61 +73,36 @@ export const TimelineRuler: React.FC<TimelineRulerProps> = ({
               key={year}
               className={`ruler-node ${isActive ? 'active' : ''} ${count > 0 ? 'has-events' : ''} ${yearTopics.length > 0 ? 'has-topics' : ''}`}
               onClick={() => onSelectYear(isActive ? null : year)}
-              title={`${year}: ${count} verified catalysts recorded${yearTopics.length > 0 ? ` · Topics: ${yearTopics.map((t) => t.name).join(', ')}` : ''}`}
+              title={`${year}: ${count} verified catalysts recorded`}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') onSelectYear(isActive ? null : year);
               }}
             >
-              {/* Topic Marker Layer: COLORED DOT → TOPIC NAME */}
-              {yearTopics.length > 0 && (
-                <div
-                  className={`ruler-topic-layer ${year === 2004 ? 'grid-layout' : ''} ${year === 2018 ? 'tier-elevated' : ''}`}
-                  onClick={(e) => {
-                    // Selecting topic also activates the corresponding year epoch
-                    e.stopPropagation();
-                    onSelectYear(isActive ? null : year);
-                  }}
-                >
-                  {yearTopics.map((topic) => (
-                    <div
-                      key={topic.id}
-                      className="ruler-topic-marker"
-                      title={`${topic.name} (Introduced: ${topic.introduced})`}
-                    >
-                      <span
-                        className="ruler-topic-dot"
-                        style={{ backgroundColor: topic.color }}
-                        aria-hidden="true"
-                      />
-                      <span className="ruler-topic-name">{topic.name}</span>
-                    </div>
-                  ))}
-                  {/* Vertical hairline connector for elevated tier to prevent overlap */}
-                  {year === 2018 && <div className="ruler-tier-connector" aria-hidden="true" />}
-                </div>
-              )}
+              {/* 1. Year Label */}
+              <div className="ruler-year-text">{year}</div>
 
-              {/* Density signal indicator above baseline */}
-              <div className="ruler-density-wrapper">
-                {count > 0 ? (
-                  <span 
-                    className="ruler-density-bar" 
-                    style={{ height: `${barHeight}px` }} 
-                  />
-                ) : (
-                  <span className="ruler-density-dot-quiet" />
+              {/* 2. Tick Mark touching continuous baseline with subtle event marker dots */}
+              <div className="ruler-tick-wrapper">
+                <span
+                  className={`ruler-density-tick ${count > 0 ? 'prominent' : ''}`}
+                  style={{ height: `${barHeight}px` }}
+                />
+                {yearTopics.length > 0 && (
+                  <div className="ruler-subtle-dots" aria-hidden="true">
+                    {yearTopics.map((topic) => (
+                      <span
+                        key={topic.id}
+                        className="ruler-subtle-dot"
+                        style={{ backgroundColor: topic.color }}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {/* Tick marker touching baseline */}
-              <div className={`ruler-tick-mark ${count > 0 ? 'prominent' : ''}`} />
-
-              {/* Year Label */}
-              <div className="ruler-year-text">{year}</div>
-
-              {/* Event Count underneath */}
+              {/* 3. Event Count underneath */}
               <div className="ruler-count-caption">
                 {count > 0 ? `${count}` : '—'}
               </div>

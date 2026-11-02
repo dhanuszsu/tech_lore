@@ -286,7 +286,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 y1={padTop}
                 x2={selectedEventPoint.x}
                 y2={padTop + plotH}
-                stroke="#38bdf8"
+                stroke="#ff66b8"
                 strokeWidth="1.5"
                 strokeDasharray="4 3"
                 opacity="0.8"
@@ -296,7 +296,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 cy={selectedEventPoint.y}
                 r="14"
                 fill="none"
-                stroke="#38bdf8"
+                stroke="#ff66b8"
                 strokeWidth="1.5"
                 opacity="0.45"
                 className="pulse-ring"
@@ -310,7 +310,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                   height="20"
                   rx="4"
                   fill="rgba(15, 23, 42, 0.92)"
-                  stroke="#38bdf8"
+                  stroke="#ff66b8"
                   strokeWidth="1"
                 />
                 <text
@@ -397,15 +397,15 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                       cx={px}
                       cy={py}
                       r="9"
-                      fill="rgba(56, 189, 248, 0.25)"
-                      stroke="#38bdf8"
+                      fill="rgba(255, 102, 184, 0.25)"
+                      stroke="#ff66b8"
                       strokeWidth="1.5"
                     />
                     <circle
                       cx={px}
                       cy={py}
                       r="5"
-                      fill="#38bdf8"
+                      fill="#ff66b8"
                       stroke="#ffffff"
                       strokeWidth="2"
                     />
