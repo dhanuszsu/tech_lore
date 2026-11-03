@@ -1,12 +1,46 @@
 import React, { useState, useMemo } from 'react';
 import type { Topic, TopicFeatures, KMeansExport } from '../types';
-import { BarChart3, GitCompare, ArrowRight, SlidersHorizontal } from 'lucide-react';
+import { BarChart3, GitCompare, ArrowRight, SlidersHorizontal, TrendingUp, Clock, Zap, Activity, Layers } from 'lucide-react';
 
 interface ClusterStudioProps {
   topics: Topic[];
   kmeansData: KMeansExport;
   onSelectTopic: (topicId: string) => void;
 }
+
+// Handcrafted layout offsets for PCA 2D projection so that all 23 topic labels are 100% visible and uncollided
+const pcaLabelOffsets: Record<string, { anchor: 'start' | 'end'; dx: number; dy: number }> = {
+  // Right-side topics (anchor: 'end' ensures text flows toward the interior and never clips the right border)
+  alphago: { anchor: 'end', dx: -12, dy: 4 },
+  metaverse: { anchor: 'end', dx: -12, dy: 4 },
+  stable_diffusion: { anchor: 'end', dx: -12, dy: 4 },
+  bert: { anchor: 'start', dx: 12, dy: 4 },
+  prompt_engineering: { anchor: 'start', dx: 12, dy: 4 },
+
+  // Center frontier
+  generative_ai: { anchor: 'start', dx: 12, dy: -4 },
+  large_language_models: { anchor: 'start', dx: 12, dy: 4 },
+  ai_agents: { anchor: 'end', dx: -12, dy: 4 },
+
+  // Bottom foundation
+  convolutional_neural_network: { anchor: 'start', dx: 12, dy: 4 },
+  expert_systems: { anchor: 'end', dx: -12, dy: 4 },
+  support_vector_machines: { anchor: 'start', dx: 12, dy: 4 },
+  agi: { anchor: 'end', dx: -12, dy: 4 },
+
+  // Left classic AI cluster - staggered cleanly across left/right/top/bottom
+  transformer_model: { anchor: 'start', dx: 10, dy: -12 },
+  deep_learning: { anchor: 'end', dx: -12, dy: 0 },
+  midjourney: { anchor: 'start', dx: 8, dy: -14 },
+  data_science: { anchor: 'start', dx: 12, dy: 0 },
+  machine_learning: { anchor: 'start', dx: 12, dy: 14 },
+  natural_language_processing: { anchor: 'start', dx: 12, dy: 26 },
+  neural_networks: { anchor: 'start', dx: 12, dy: 38 },
+  robotics: { anchor: 'end', dx: -12, dy: 2 },
+  quantum_computing: { anchor: 'end', dx: -12, dy: -12 },
+  computer_vision: { anchor: 'start', dx: 10, dy: -4 },
+  reinforcement_learning: { anchor: 'end', dx: -12, dy: 18 }
+};
 
 export const ClusterStudio: React.FC<ClusterStudioProps> = ({
   topics,
@@ -21,7 +55,6 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
 
   const clusterPalette = ['#ff66b8', '#10b981', '#f59e0b', '#ec4899', '#a855f7', '#64748b'];
 
-  const currentCentroids = useMemo(() => kmeansData.clusters_by_k[String(k)] || [], [kmeansData, k]);
   const currentAssignments = useMemo(() => kmeansData.assignments_by_k[String(k)] || [], [kmeansData, k]);
   const silhouette = kmeansData.silhouette_scores[String(k)] || 0;
 
@@ -67,18 +100,13 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
     );
   }, [topicsWithCluster, primaryWithCluster, primaryTopic]);
 
-  // Primary cluster centroid
-  const primaryCentroid = useMemo(() => {
-    return currentCentroids[primaryWithCluster.cluster_idx] || currentCentroids[0];
-  }, [currentCentroids, primaryWithCluster]);
-
-  const plotWidth = 720;
-  const plotHeight = 460;
-  const padding = 54;
+  const plotWidth = 760;
+  const plotHeight = 480;
+  const padding = 56;
 
   const [minX, maxX, minY, maxY, labelX, labelY] = useMemo(() => {
     if (axisMode === 'pca') {
-      return [-3.5, 3.5, -3.0, 3.0, 'Dimension 1 (Scale & Growth)', 'Dimension 2 (Changes & Longevity)'];
+      return [-3.2, 4.2, -2.8, 3.0, 'Dimension 1 (Scale & Growth)', 'Dimension 2 (Changes & Longevity)'];
     } else if (axisMode === 'growth_volatility') {
       return [-30, 260, 0, 16, 'Growth Over Time (%)', 'Trend Changes (σ)'];
     } else {
@@ -86,7 +114,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
     }
   }, [axisMode]);
 
-  const getCoord = (tf: typeof topicsWithCluster[0]) => {
+  const getCoord = (tf: typeof topicsWithCluster[0]): [number, number] => {
     let rawX = tf.pca_x;
     let rawY = tf.pca_y;
 
@@ -108,9 +136,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
 
   const handleTopicTabClick = (topicId: string) => {
     if (selectedTopicId === topicId) return;
-    // Set as primary topic
     setSelectedTopicId(topicId);
-    // If the new primary matches comparison, clear comparison
     if (compareTopicId === topicId) {
       setCompareTopicId(null);
     }
@@ -127,6 +153,103 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
     const dy = primaryWithCluster.pca_y - compareWithCluster.pca_y;
     return Math.sqrt(dx * dx + dy * dy).toFixed(2);
   }, [primaryWithCluster, compareWithCluster]);
+
+  // Sort topics so selected and hovered topics render on top in the SVG stacking order
+  const sortedTopics = useMemo(() => {
+    return [...topicsWithCluster].sort((a, b) => {
+      const scoreA =
+        (a.topic_id === primaryTopic.id ? 10 : 0) +
+        (a.topic_id === compareTopic?.id ? 5 : 0) +
+        (a.topic_id === hoveredTopic?.topic_id ? 3 : 0);
+      const scoreB =
+        (b.topic_id === primaryTopic.id ? 10 : 0) +
+        (b.topic_id === compareTopic?.id ? 5 : 0) +
+        (b.topic_id === hoveredTopic?.topic_id ? 3 : 0);
+      return scoreA - scoreB;
+    });
+  }, [topicsWithCluster, primaryTopic, compareTopic, hoveredTopic]);
+
+  // ==========================================
+  // COMPARISON STORY CALCULATIONS (ISSUE 2)
+  // ==========================================
+  const comparisonStory = useMemo(() => {
+    if (!compareWithCluster || !compareTopic) return null;
+
+    const p = primaryWithCluster;
+    const c = compareWithCluster;
+
+    // 1. CAGR / Velocity
+    const maxCagr = Math.max(p.cagr, c.cagr, 1);
+    const cagrDiff = Math.abs(p.cagr - c.cagr).toFixed(1);
+    const cagrLeader = p.cagr > c.cagr ? primaryTopic.name : c.cagr > p.cagr ? compareTopic.name : null;
+    const cagrLeaderText = cagrLeader
+      ? `${cagrLeader} leads (+${cagrDiff}%/yr)`
+      : 'Identical expansion speed';
+    const cagrInterpretation = p.cagr > c.cagr
+      ? `${primaryTopic.name} expanded at a steeper velocity, growing +${cagrDiff}% faster per year than ${compareTopic.name}.`
+      : c.cagr > p.cagr
+      ? `${compareTopic.name} scaled faster over its adoption curve, outpacing ${primaryTopic.name} by +${cagrDiff}% per year.`
+      : 'Both technologies scaled at an identical annual expansion pace.';
+
+    // 2. Persistence / Longevity
+    const maxPers = Math.max(p.persistence_months, c.persistence_months, 1);
+    const persDiff = Math.abs(p.persistence_months - c.persistence_months);
+    const persLeader = p.persistence_months > c.persistence_months ? primaryTopic.name : c.persistence_months > p.persistence_months ? compareTopic.name : null;
+    const persLeaderText = persLeader
+      ? `${persLeader} leads (+${persDiff} mos)`
+      : 'Equal staying power';
+    const persInterpretation = p.persistence_months > c.persistence_months
+      ? `${primaryTopic.name} maintained mainstream momentum longer, sustaining ${persDiff} additional months above baseline.`
+      : c.persistence_months > p.persistence_months
+      ? `${compareTopic.name} demonstrated greater staying power, outlasting ${primaryTopic.name} by ${persDiff} months.`
+      : 'Both technologies maintained active adoption for an identical number of months.';
+
+    // 3. Peak Attention
+    const peakDiff = Math.abs(p.peak_intensity - c.peak_intensity).toFixed(0);
+    const peakLeader = p.peak_intensity > c.peak_intensity ? primaryTopic.name : c.peak_intensity > p.peak_intensity ? compareTopic.name : null;
+    const peakLeaderText = peakLeader
+      ? `${peakLeader} reached higher apex (+${peakDiff})`
+      : 'Tied historical apex';
+    const peakInterpretation = p.peak_intensity > c.peak_intensity
+      ? `${primaryTopic.name} reached a stronger peak volume at its cultural zenith (${p.peak_intensity}/100).`
+      : c.peak_intensity > p.peak_intensity
+      ? `${compareTopic.name} reached a higher peak search volume at its cultural zenith (${c.peak_intensity}/100).`
+      : 'Both technologies achieved identical search visibility at their cultural zeniths.';
+
+    // 4. Volatility / Curve Stability
+    const maxVol = Math.max(p.volatility, c.volatility, 0.1);
+    const smootherLeader = p.volatility < c.volatility ? primaryTopic.name : c.volatility < p.volatility ? compareTopic.name : null;
+    const volLeaderText = smootherLeader
+      ? `${smootherLeader} steadier curve`
+      : 'Comparable volatility';
+    const volInterpretation = p.volatility < c.volatility
+      ? `${primaryTopic.name} followed a smoother adoption curve (${p.volatility}σ) with less boom-and-bust fluctuation than ${compareTopic.name} (${c.volatility}σ).`
+      : c.volatility < p.volatility
+      ? `${compareTopic.name} exhibited a steadier, more predictable adoption curve (${c.volatility}σ) compared to ${primaryTopic.name} (${p.volatility}σ).`
+      : 'Both technologies exhibited similar degrees of trajectory volatility.';
+
+    // 5. Synthesis Editorial Verdict
+    const isSameFamily = p.cluster_idx === c.cluster_idx;
+    const verdictText = isSameFamily
+      ? `${primaryTopic.name} and ${compareTopic.name} share Cluster C${p.cluster_idx + 1} as close behavioral siblings. While ${cagrLeader || primaryTopic.name} expanded with greater initial velocity, ${persLeader || primaryTopic.name} achieved longer sustained staying power. Their spatial proximity (${featureDistance}) confirms deeply interconnected evolutionary arcs.`
+      : `${primaryTopic.name} (Cluster C${p.cluster_idx + 1}) and ${compareTopic.name} (Cluster C${c.cluster_idx + 1}) follow distinct behavioral archetypes. ${cagrLeader || primaryTopic.name} led in annual expansion speed (+${Math.max(p.cagr, c.cagr)}%/yr), while ${persLeader || primaryTopic.name} demonstrated greater endurance (${Math.max(p.persistence_months, c.persistence_months)} months).`;
+
+    return {
+      maxCagr,
+      cagrLeaderText,
+      cagrInterpretation,
+      maxPers,
+      persLeaderText,
+      persInterpretation,
+      peakLeaderText,
+      peakInterpretation,
+      maxVol,
+      volLeaderText,
+      volInterpretation,
+      isSameFamily,
+      verdictText
+    };
+  }, [primaryWithCluster, compareWithCluster, primaryTopic, compareTopic, featureDistance]);
 
   return (
     <div className="cluster-studio-container" role="main" aria-label="Technology Clustering Lab">
@@ -252,7 +375,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
 
       {/* 3. TWO-COLUMN WORKSPACE: LEFT (62% PCA PLOT) | RIGHT (38% COMPARISON & DETAILS) */}
       <div className="cluster-studio-grid">
-        {/* LEFT COLUMN: 2D Feature Space Scatter Plot */}
+        {/* LEFT COLUMN: 2D Feature Space Scatter Plot (100% permanently visible labels) */}
         <div className="workbench-card">
           <div className="workbench-card-header">
             <div>
@@ -311,7 +434,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
               {/* Axis Labels */}
               <text
                 x={plotWidth / 2}
-                y={plotHeight - 14}
+                y={plotHeight - 16}
                 fill="var(--text-secondary)"
                 fontSize="11"
                 textAnchor="middle"
@@ -367,13 +490,21 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                 </g>
               )}
 
-              {/* Data points */}
-              {topicsWithCluster.map((tf) => {
+              {/* Data points and permanently visible topic labels */}
+              {sortedTopics.map((tf) => {
                 const [cx, cy] = getCoord(tf);
                 const clusterColor = clusterPalette[tf.cluster_idx % clusterPalette.length];
                 const isPrimary = tf.topic_id === primaryTopic.id;
                 const isCompare = tf.topic_id === compareTopic?.id;
                 const isHovered = hoveredTopic?.topic_id === tf.topic_id;
+                const isHighlighted = isPrimary || isCompare || isHovered;
+
+                const offset: { anchor: 'start' | 'end'; dx: number; dy: number } = axisMode === 'pca'
+                  ? (pcaLabelOffsets[tf.topic_id] || (cx > plotWidth * 0.6 ? { anchor: 'end', dx: -12, dy: 4 } : { anchor: 'start', dx: 12, dy: 4 }))
+                  : { anchor: cx > plotWidth * 0.58 ? 'end' : 'start', dx: cx > plotWidth * 0.58 ? -12 : 12, dy: 4 };
+
+                const tx = cx + offset.dx;
+                const ty = cy + offset.dy;
 
                 return (
                   <g
@@ -388,11 +519,11 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                       <circle
                         cx={cx}
                         cy={cy}
-                        r={12}
+                        r={14}
                         fill="none"
                         stroke="var(--accent-pink)"
-                        strokeWidth="1.5"
-                        opacity="0.6"
+                        strokeWidth="1.8"
+                        opacity="0.75"
                         className="pulse-ring"
                       />
                     )}
@@ -402,12 +533,26 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                       <circle
                         cx={cx}
                         cy={cy}
-                        r={10}
+                        r={12}
                         fill="none"
                         stroke="#38bdf8"
-                        strokeWidth="1.5"
+                        strokeWidth="1.8"
                         strokeDasharray="3 2"
-                        opacity="0.75"
+                        opacity="0.85"
+                      />
+                    )}
+
+                    {/* Connecting tick line if label offset vertically */}
+                    {offset.dy !== 4 && (
+                      <line
+                        x1={cx}
+                        y1={cy}
+                        x2={tx + (offset.anchor === 'end' ? 6 : -6)}
+                        y2={ty - 3}
+                        stroke={isPrimary ? 'var(--accent-pink)' : isCompare ? '#38bdf8' : 'rgba(255, 255, 255, 0.2)'}
+                        strokeWidth="1"
+                        strokeDasharray="2 2"
+                        opacity={isHighlighted ? 0.9 : 0.45}
                       />
                     )}
 
@@ -415,24 +560,28 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                     <circle
                       cx={cx}
                       cy={cy}
-                      r={isPrimary ? 8 : isCompare ? 6.5 : isHovered ? 6 : 4.5}
+                      r={isPrimary ? 8.5 : isCompare ? 7 : isHovered ? 6.5 : 5}
                       fill={clusterColor}
                       stroke={isPrimary ? 'var(--accent-pink)' : isCompare ? '#38bdf8' : '#ffffff'}
-                      strokeWidth={isPrimary ? 2.5 : isCompare ? 2 : isHovered ? 2 : 1}
-                      fillOpacity={isPrimary || isCompare || isHovered ? 1 : 0.85}
+                      strokeWidth={isPrimary ? 2.5 : isCompare ? 2 : isHovered ? 2 : 1.2}
+                      fillOpacity={isHighlighted ? 1 : 0.88}
                     />
 
-                    {/* Topic text label */}
+                    {/* Topic text label: Always visible, dark outline stroke halo prevents overlap clashes */}
                     <text
-                      x={cx + 8}
-                      y={cy + 4}
-                      fill={isPrimary ? '#ffffff' : isCompare ? '#38bdf8' : isHovered ? '#ffffff' : '#cbd5e1'}
-                      fontSize={isPrimary ? '12' : isCompare ? '11.5' : isHovered ? '11' : '10'}
-                      fontWeight={isPrimary || isCompare || isHovered ? '600' : '500'}
+                      x={tx}
+                      y={ty}
+                      textAnchor={offset.anchor}
+                      fill={isPrimary ? '#ffffff' : isCompare ? '#38bdf8' : isHovered ? '#ffffff' : '#e2e8f0'}
+                      fontSize={isPrimary ? '12' : isCompare ? '11.5' : isHovered ? '11' : '10.5'}
+                      fontWeight={isPrimary ? '700' : isCompare ? '600' : isHovered ? '600' : '500'}
                       fontFamily="var(--font-sans)"
-                      pointerEvents="none"
+                      stroke="rgba(11, 14, 20, 0.95)"
+                      strokeWidth={isHighlighted ? '3.5' : '3'}
+                      paintOrder="stroke fill"
                       style={{
-                        textShadow: '0 1px 4px rgba(0,0,0,0.95)'
+                        userSelect: 'none',
+                        transition: 'fill 0.15s ease, font-size 0.15s ease'
                       }}
                     >
                       {tf.name}
@@ -476,7 +625,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
           </div>
         </div>
 
-        {/* RIGHT COLUMN: TOPIC COMPARISON & DETAILS PANEL */}
+        {/* RIGHT COLUMN: TOPIC COMPARISON & TRAJECTORY ANALYSIS (TECH LORE EXPERIENCE) */}
         <div className="cluster-comparison-panel" role="region" aria-label="Topic Comparison & Trajectory Details">
           {/* Header */}
           <div className="comparison-header">
@@ -489,9 +638,21 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
                   aria-hidden="true"
                 />
                 <h3 className="comparison-subject-name">{primaryTopic.name}</h3>
+                {compareTopic && (
+                  <>
+                    <span style={{ color: 'var(--text-dim)', fontSize: '13px', margin: '0 2px' }}>vs</span>
+                    <span
+                      className="comparison-topic-dot"
+                      style={{ backgroundColor: compareTopic.color }}
+                      aria-hidden="true"
+                    />
+                    <h3 className="comparison-subject-name" style={{ color: '#38bdf8' }}>{compareTopic.name}</h3>
+                  </>
+                )}
               </div>
               <span className="comparison-subject-meta">
-                Introduced {primaryTopic.introduced} · {primaryTopic.category}
+                {primaryTopic.category} · Introduced {primaryTopic.introduced}
+                {compareTopic && ` | ${compareTopic.category} · Introduced ${compareTopic.introduced}`}
               </span>
             </div>
 
@@ -505,47 +666,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
             </button>
           </div>
 
-          {/* Cluster Assignment Badge */}
-          <div className="comparison-cluster-banner">
-            <div className="cluster-tag-badge">
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: clusterPalette[primaryWithCluster.cluster_idx % clusterPalette.length]
-                }}
-              />
-              <span style={{ color: '#ffffff' }}>
-                Assigned to Cluster {primaryWithCluster.cluster_idx + 1}
-              </span>
-              <span style={{ color: 'var(--text-dim)', fontWeight: 400 }}>
-                ({currentCentroids[primaryWithCluster.cluster_idx]?.topics.length || 0} topics in group)
-              </span>
-            </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--accent-pink)' }}>
-              Group CAGR: {primaryCentroid?.cagr?.toFixed(1)}% · Volatility: {primaryCentroid?.volatility?.toFixed(1)}σ
-            </span>
-          </div>
-
-          {/* 2D Space Position / Coordinates */}
-          <div className="cluster-coordinates-box">
-            <div className="coord-label">
-              Active Coordinates ({axisMode === 'pca' ? 'PCA Standardized Space' : 'Custom Dimensions'}):
-            </div>
-            <div className="coord-values-grid">
-              <div className="coord-item">
-                <span>{axisMode === 'pca' ? 'Dim 1 (Scale/Growth):' : 'X Axis:'}</span>
-                <strong>{axisMode === 'pca' ? primaryWithCluster.pca_x.toFixed(2) : axisMode === 'growth_volatility' ? `${primaryWithCluster.cagr.toFixed(1)}%` : `${primaryWithCluster.peak_intensity.toFixed(0)}/100`}</strong>
-              </div>
-              <div className="coord-item">
-                <span>{axisMode === 'pca' ? 'Dim 2 (Longevity):' : 'Y Axis:'}</span>
-                <strong>{axisMode === 'pca' ? primaryWithCluster.pca_y.toFixed(2) : axisMode === 'growth_volatility' ? `${primaryWithCluster.volatility.toFixed(1)}σ` : `${primaryWithCluster.persistence_months.toFixed(0)}m`}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* Comparison Selector */}
+          {/* Comparison Selector Dropdown */}
           <div className="compare-selector-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <GitCompare size={13} color="var(--accent-pink)" />
@@ -555,9 +676,9 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
               value={compareTopicId || ''}
               onChange={(e) => setCompareTopicId(e.target.value || null)}
               className="compare-select-dropdown"
-              aria-label="Select secondary topic for side-by-side comparison"
+              aria-label="Select secondary topic for trajectory comparison"
             >
-              <option value="">(None — Single Topic Inspection)</option>
+              <option value="">(None — Single Topic Profile)</option>
               {topics
                 .filter((t) => t.id !== primaryTopic.id)
                 .map((t) => (
@@ -568,115 +689,314 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
             </select>
           </div>
 
-          {/* Side-by-Side Comparison Matrix OR Single Topic Feature Grid */}
-          {compareWithCluster ? (
-            <div className="comparison-side-by-side-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>
-                  <strong style={{ color: '#ffffff' }}>{primaryTopic.name}</strong> vs <strong style={{ color: '#38bdf8' }}>{compareTopic?.name}</strong>
-                </span>
-                <span style={{ color: 'var(--accent-pink)' }}>
-                  Spatial Δ: {featureDistance}
-                </span>
+          {/* Comparison Body: Side-by-Side Visual Story vs Single Topic Profile */}
+          {comparisonStory && compareWithCluster ? (
+            <div className="comparison-lore-experience">
+              {/* Relationship Status Bar */}
+              <div className="comp-relationship-bar">
+                <div className="comp-relationship-badge">
+                  {comparisonStory.isSameFamily ? (
+                    <span className="relationship-tag family">
+                      <Layers size={12} />
+                      Same Technology Family (Cluster C{primaryWithCluster.cluster_idx + 1})
+                    </span>
+                  ) : (
+                    <span className="relationship-tag divergent">
+                      <GitCompare size={12} />
+                      Different Archetypes (C{primaryWithCluster.cluster_idx + 1} vs C{compareWithCluster.cluster_idx + 1})
+                    </span>
+                  )}
+                  <span className="relationship-dist">
+                    Spatial Proximity: <strong>Δ {featureDistance}</strong> ·{' '}
+                    {Number(featureDistance) < 1.2
+                      ? 'Direct Cousins'
+                      : Number(featureDistance) < 2.5
+                      ? 'Related Evolutionary Path'
+                      : 'Distinct Adoption Curves'}
+                  </span>
+                </div>
               </div>
 
-              <table className="comparison-diff-table" aria-label="Side by side feature comparison">
-                <thead>
-                  <tr>
-                    <th>METRIC</th>
-                    <th>{primaryTopic.name.slice(0, 14)}</th>
-                    <th>{compareTopic?.name.slice(0, 14)}</th>
-                    <th>DELTA (Δ)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td style={{ color: 'var(--text-secondary)' }}>CAGR (Growth)</td>
-                    <td>+{primaryWithCluster.cagr}%</td>
-                    <td>+{compareWithCluster.cagr}%</td>
-                    <td className={primaryWithCluster.cagr >= compareWithCluster.cagr ? 'delta-pos' : 'delta-neg'}>
-                      {(primaryWithCluster.cagr - compareWithCluster.cagr) > 0 ? '+' : ''}
-                      {(primaryWithCluster.cagr - compareWithCluster.cagr).toFixed(1)}%
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'var(--text-secondary)' }}>Volatility (σ)</td>
-                    <td>{primaryWithCluster.volatility}σ</td>
-                    <td>{compareWithCluster.volatility}σ</td>
-                    <td className={primaryWithCluster.volatility <= compareWithCluster.volatility ? 'delta-pos' : 'delta-neg'}>
-                      {(primaryWithCluster.volatility - compareWithCluster.volatility) > 0 ? '+' : ''}
-                      {(primaryWithCluster.volatility - compareWithCluster.volatility).toFixed(1)}σ
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'var(--text-secondary)' }}>Peak Normalized</td>
-                    <td>{primaryWithCluster.peak_intensity}/100</td>
-                    <td>{compareWithCluster.peak_intensity}/100</td>
-                    <td className={primaryWithCluster.peak_intensity >= compareWithCluster.peak_intensity ? 'delta-pos' : 'delta-neg'}>
-                      {(primaryWithCluster.peak_intensity - compareWithCluster.peak_intensity) > 0 ? '+' : ''}
-                      {(primaryWithCluster.peak_intensity - compareWithCluster.peak_intensity).toFixed(0)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'var(--text-secondary)' }}>Persistence</td>
-                    <td>{primaryWithCluster.persistence_months}m</td>
-                    <td>{compareWithCluster.persistence_months}m</td>
-                    <td className={primaryWithCluster.persistence_months >= compareWithCluster.persistence_months ? 'delta-pos' : 'delta-neg'}>
-                      {(primaryWithCluster.persistence_months - compareWithCluster.persistence_months) > 0 ? '+' : ''}
-                      {(primaryWithCluster.persistence_months - compareWithCluster.persistence_months).toFixed(0)}m
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'var(--text-secondary)' }}>Post-Peak Drop</td>
-                    <td>{(primaryWithCluster.decay_ratio * 100).toFixed(0)}%</td>
-                    <td>{(compareWithCluster.decay_ratio * 100).toFixed(0)}%</td>
-                    <td className={primaryWithCluster.decay_ratio <= compareWithCluster.decay_ratio ? 'delta-pos' : 'delta-neg'}>
-                      {((primaryWithCluster.decay_ratio - compareWithCluster.decay_ratio) * 100).toFixed(0)}%
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ color: 'var(--text-secondary)' }}>Cluster Group</td>
-                    <td style={{ color: clusterPalette[primaryWithCluster.cluster_idx % clusterPalette.length] }}>
-                      C{primaryWithCluster.cluster_idx + 1}
-                    </td>
-                    <td style={{ color: clusterPalette[compareWithCluster.cluster_idx % clusterPalette.length] }}>
-                      C{compareWithCluster.cluster_idx + 1}
-                    </td>
-                    <td className={primaryWithCluster.cluster_idx === compareWithCluster.cluster_idx ? 'delta-pos' : 'delta-neu'}>
-                      {primaryWithCluster.cluster_idx === compareWithCluster.cluster_idx ? 'Identical Group' : 'Different Group'}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              {/* Visual Trajectory Dimension Stories */}
+              <div className="comp-stories-list">
+                {/* 1. Expansion Velocity */}
+                <div className="comp-story-card">
+                  <div className="comp-story-header">
+                    <div className="comp-story-title-group">
+                      <span className="comp-story-label">
+                        <TrendingUp size={12} color="var(--accent-pink)" />
+                        EXPANSION VELOCITY
+                      </span>
+                      <span className="comp-story-lead">
+                        {comparisonStory.cagrLeaderText}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="comp-bars-block">
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name primary">
+                          <span className="comp-bar-dot" style={{ backgroundColor: primaryTopic.color }} />
+                          {primaryTopic.name}
+                        </span>
+                        <span className="comp-bar-value">+{primaryWithCluster.cagr}%/yr</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill primary"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, (primaryWithCluster.cagr / comparisonStory.maxCagr) * 100))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name compare">
+                          <span className="comp-bar-dot" style={{ backgroundColor: compareTopic?.color || '#38bdf8' }} />
+                          {compareTopic?.name}
+                        </span>
+                        <span className="comp-bar-value">+{compareWithCluster.cagr}%/yr</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill compare"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, (compareWithCluster.cagr / comparisonStory.maxCagr) * 100))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="comp-story-interpretation">
+                    {comparisonStory.cagrInterpretation}
+                  </p>
+                </div>
+
+                {/* 2. Cultural Longevity */}
+                <div className="comp-story-card">
+                  <div className="comp-story-header">
+                    <div className="comp-story-title-group">
+                      <span className="comp-story-label">
+                        <Clock size={12} color="var(--accent-pink)" />
+                        CULTURAL LONGEVITY
+                      </span>
+                      <span className="comp-story-lead">
+                        {comparisonStory.persLeaderText}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="comp-bars-block">
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name primary">
+                          <span className="comp-bar-dot" style={{ backgroundColor: primaryTopic.color }} />
+                          {primaryTopic.name}
+                        </span>
+                        <span className="comp-bar-value">{primaryWithCluster.persistence_months} mos</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill primary"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, (primaryWithCluster.persistence_months / comparisonStory.maxPers) * 100))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name compare">
+                          <span className="comp-bar-dot" style={{ backgroundColor: compareTopic?.color || '#38bdf8' }} />
+                          {compareTopic?.name}
+                        </span>
+                        <span className="comp-bar-value">{compareWithCluster.persistence_months} mos</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill compare"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, (compareWithCluster.persistence_months / comparisonStory.maxPers) * 100))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="comp-story-interpretation">
+                    {comparisonStory.persInterpretation}
+                  </p>
+                </div>
+
+                {/* 3. Peak Attention */}
+                <div className="comp-story-card">
+                  <div className="comp-story-header">
+                    <div className="comp-story-title-group">
+                      <span className="comp-story-label">
+                        <Zap size={12} color="var(--accent-pink)" />
+                        PEAK ATTENTION APEX
+                      </span>
+                      <span className="comp-story-lead">
+                        {comparisonStory.peakLeaderText}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="comp-bars-block">
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name primary">
+                          <span className="comp-bar-dot" style={{ backgroundColor: primaryTopic.color }} />
+                          {primaryTopic.name}
+                        </span>
+                        <span className="comp-bar-value">{primaryWithCluster.peak_intensity}/100</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill primary"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, primaryWithCluster.peak_intensity))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name compare">
+                          <span className="comp-bar-dot" style={{ backgroundColor: compareTopic?.color || '#38bdf8' }} />
+                          {compareTopic?.name}
+                        </span>
+                        <span className="comp-bar-value">{compareWithCluster.peak_intensity}/100</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill compare"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, compareWithCluster.peak_intensity))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="comp-story-interpretation">
+                    {comparisonStory.peakInterpretation}
+                  </p>
+                </div>
+
+                {/* 4. Trajectory Stability */}
+                <div className="comp-story-card">
+                  <div className="comp-story-header">
+                    <div className="comp-story-title-group">
+                      <span className="comp-story-label">
+                        <Activity size={12} color="var(--accent-pink)" />
+                        TRAJECTORY STABILITY
+                      </span>
+                      <span className="comp-story-lead">
+                        {comparisonStory.volLeaderText}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="comp-bars-block">
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name primary">
+                          <span className="comp-bar-dot" style={{ backgroundColor: primaryTopic.color }} />
+                          {primaryTopic.name}
+                        </span>
+                        <span className="comp-bar-value">{primaryWithCluster.volatility}σ {primaryWithCluster.volatility < compareWithCluster.volatility ? '(Steadier)' : '(More cyclical)'}</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill primary"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, (primaryWithCluster.volatility / comparisonStory.maxVol) * 100))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="comp-bar-item">
+                      <div className="comp-bar-meta">
+                        <span className="comp-bar-name compare">
+                          <span className="comp-bar-dot" style={{ backgroundColor: compareTopic?.color || '#38bdf8' }} />
+                          {compareTopic?.name}
+                        </span>
+                        <span className="comp-bar-value">{compareWithCluster.volatility}σ {compareWithCluster.volatility < primaryWithCluster.volatility ? '(Steadier)' : '(More cyclical)'}</span>
+                      </div>
+                      <div className="comp-bar-track">
+                        <div
+                          className="comp-bar-fill compare"
+                          style={{
+                            width: `${Math.min(100, Math.max(12, (compareWithCluster.volatility / comparisonStory.maxVol) * 100))}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="comp-story-interpretation">
+                    {comparisonStory.volInterpretation}
+                  </p>
+                </div>
+              </div>
+
+              {/* Synthesis Verdict Card */}
+              <div className="comp-verdict-card">
+                <div className="comp-verdict-title">
+                  <span className="verdict-tag">ARCHIVAL SYNTHESIS</span>
+                  <span className="verdict-pair">
+                    {primaryTopic.name} vs {compareTopic?.name}
+                  </span>
+                </div>
+                <p className="comp-verdict-text">
+                  {comparisonStory.verdictText}
+                </p>
+              </div>
             </div>
           ) : (
-            /* Single Topic Relevant Statistical Features */
-            <div className="comparison-features-grid">
-              <div className="comp-metric-box">
-                <span className="comp-metric-label">Growth (CAGR)</span>
-                <span className="comp-metric-val" style={{ color: 'var(--accent-emerald)' }}>
-                  +{primaryWithCluster.cagr}%
-                </span>
+            /* Single Topic Trajectory Profile */
+            <div className="single-topic-experience">
+              <div className="single-topic-header-summary">
+                <span className="card-eyebrow-section">LIFECYCLE TRAJECTORY PROFILE</span>
+                <p className="single-topic-bio">
+                  {primaryTopic.name} debuted in <strong>{primaryTopic.introduced}</strong> ({primaryTopic.category}).
+                  It established an apex search intensity of <strong>{primaryWithCluster.peak_intensity}/100</strong>, persisting for <strong>{primaryWithCluster.persistence_months} months</strong> above baseline with <strong>+{primaryWithCluster.cagr}%/yr</strong> expansion velocity.
+                </p>
               </div>
-              <div className="comp-metric-box">
-                <span className="comp-metric-label">Volatility (σ)</span>
-                <span className="comp-metric-val">{primaryWithCluster.volatility}σ</span>
+
+              <div className="single-topic-metrics-grid">
+                <div className="single-metric-card">
+                  <span className="single-metric-label">Annual Velocity</span>
+                  <strong className="single-metric-val" style={{ color: 'var(--accent-emerald)' }}>+{primaryWithCluster.cagr}%</strong>
+                  <span className="single-metric-sub">Compound Growth</span>
+                </div>
+                <div className="single-metric-card">
+                  <span className="single-metric-label">Cultural Longevity</span>
+                  <strong className="single-metric-val" style={{ color: 'var(--accent-pink)' }}>{primaryWithCluster.persistence_months} mos</strong>
+                  <span className="single-metric-sub">Sustained Adoption</span>
+                </div>
+                <div className="single-metric-card">
+                  <span className="single-metric-label">Historical Apex</span>
+                  <strong className="single-metric-val">{primaryWithCluster.peak_intensity}/100</strong>
+                  <span className="single-metric-sub">Peak Search Zenith</span>
+                </div>
+                <div className="single-metric-card">
+                  <span className="single-metric-label">Curve Volatility</span>
+                  <strong className="single-metric-val">{primaryWithCluster.volatility}σ</strong>
+                  <span className="single-metric-sub">Cyclical Variance</span>
+                </div>
               </div>
-              <div className="comp-metric-box">
-                <span className="comp-metric-label">Peak Intensity</span>
-                <span className="comp-metric-val">{primaryWithCluster.peak_intensity}/100</span>
-              </div>
-              <div className="comp-metric-box">
-                <span className="comp-metric-label">Persistence</span>
-                <span className="comp-metric-val">{primaryWithCluster.persistence_months} mos</span>
-              </div>
-              <div className="comp-metric-box">
-                <span className="comp-metric-label">Post-Peak Drop</span>
-                <span className="comp-metric-val">{(primaryWithCluster.decay_ratio * 100).toFixed(0)}%</span>
-              </div>
-              <div className="comp-metric-box">
-                <span className="comp-metric-label">Diffusion Entropy</span>
-                <span className="comp-metric-val">{primaryWithCluster.entropy}</span>
+
+              <div className="single-topic-callout">
+                <span>Select any technology above to compare head-to-head trajectories →</span>
               </div>
             </div>
           )}
@@ -684,7 +1004,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
           {/* Cluster Peers (Topics in Same Group) */}
           <div className="comparison-peers-section">
             <span className="comparison-peers-label">
-              Peer Topics in Cluster {primaryWithCluster.cluster_idx + 1} ({peerTopics.length}):
+              Peer Topics in Cluster C{primaryWithCluster.cluster_idx + 1} ({peerTopics.length}):
             </span>
             <div className="comparison-peers-pills">
               {peerTopics.map((pt) => (
@@ -708,65 +1028,7 @@ export const ClusterStudio: React.FC<ClusterStudioProps> = ({
         </div>
       </div>
 
-      {/* 4. CLUSTER ARCHETYPE SUMMARY BREAKDOWN (Authentic Centroid Insights) */}
-      <div className="archetype-cards-list">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <span className="card-eyebrow-section">CLUSTER GROUP PROFILES · CENTROID AVERAGES</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-dim)' }}>
-            k={k} Partitioning
-          </span>
-        </div>
-
-        <div className="archetype-cards-grid">
-          {currentCentroids.map((c, cIdx) => {
-            const clusterColor = clusterPalette[cIdx % clusterPalette.length];
-            const memberTopics = topicsWithCluster.filter((t) => t.cluster_idx === cIdx);
-            const isPrimaryCluster = primaryWithCluster.cluster_idx === cIdx;
-
-            return (
-              <div
-                key={`centroid-card-${cIdx}`}
-                className={`archetype-profile-card ${isPrimaryCluster ? 'is-highlighted-cluster' : ''}`}
-              >
-                <div className="archetype-title-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: clusterColor }}></span>
-                    <span className="archetype-name">Pattern Group {cIdx + 1} ({memberTopics.length} Topics)</span>
-                  </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-dim)' }}>
-                    Peak Avg: {c.peak_intensity.toFixed(0)}/100
-                  </span>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px', fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', margin: '6px 0' }}>
-                  <div>Growth: <strong style={{ color: '#fff' }}>{c.cagr.toFixed(1)}%</strong></div>
-                  <div>Changes: <strong style={{ color: '#fff' }}>{c.volatility.toFixed(1)}σ</strong></div>
-                  <div>Popular: <strong style={{ color: '#fff' }}>{c.persistence_months.toFixed(0)}m</strong></div>
-                </div>
-
-                <div className="archetype-topic-pills">
-                  {memberTopics.map((t) => (
-                    <button
-                      key={`topic-tag-${t.topic_id}`}
-                      className={`topic-chip-btn ${selectedTopicId === t.topic_id ? 'is-primary' : ''}`}
-                      style={{ fontSize: '11px', padding: '2px 7px' }}
-                      onClick={() => handleTopicTabClick(t.topic_id)}
-                      title="Inspect topic in Cluster Lab"
-                    >
-                      <span className="topic-chip-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <span className="topic-color-dot" style={{ backgroundColor: t.color }}></span>
-                        <span style={{ color: '#f1f5f9' }}>{t.name}</span>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 5. Mathematical Assumptions & Interpretive Boundaries */}
+      {/* 4. Mathematical Assumptions & Interpretive Boundaries (ISSUE 3: Clean, intentional spacing, zero empty gaps) */}
       <div className="workbench-card" style={{ marginTop: '4px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--accent-pink)' }}>
           <SlidersHorizontal size={14} />
