@@ -3,6 +3,8 @@
    Editorial Research Publication + Experimental Data Lab
    ========================================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap');
+
 :root {
   /* Color Palette: Deep Slate Charcoal Base */
   --bg-primary: #0b0d12;
@@ -42,11 +44,11 @@
   --cat-cyan: #06b6d4;
   --cat-purple: #a855f7;
 
-  /* Typographic Roles */
+  /* Typographic Roles: Global Bricolage Grotesque with Preserved Editorial Identity */
   --font-display: 'Newsreader', Georgia, serif;
   --font-eyebrow: 'Newsreader', Georgia, serif;
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Bricolage Grotesque', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Bricolage Grotesque', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Shadows (Quiet & Deep) */
@@ -72,6 +74,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
 }
 
 /* ==========================================================================
@@ -2469,9 +2475,9 @@ a {
 }
 
 .lore-index-headline {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: clamp(2.1rem, 3.4vw, 3.2rem);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.15;
   letter-spacing: -0.025em;
   color: var(--text-primary);
